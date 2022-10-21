@@ -1,0 +1,456 @@
+* Notes
+<2022-10-21 Fri 13:33>: I started this assignment by using the following command to create the associated Rails project:
+#+begin_src bash
+samuelbanya@Samuels-MBP ~/hub/Development/code/phase-4/phase-4-lecture-videos-intro-to-crud $ rails new flatiron-theater --api --minimal
+#+end_src
+
+I then created a 'production' resource with the following command:
+#+begin_src bash
+samuelbanya@Samuels-MBP ~/hub/Development/code/phase-4/phase-4-lecture-videos-intro-to-crud/flatiron-theater $ rails g resource production title genre budget:integer image ongoing:boolean
+      invoke  active_record
+      create    db/migrate/20221021183754_create_productions.rb
+      create    app/models/production.rb
+      invoke    test_unit
+      create      test/models/production_test.rb
+      create      test/fixtures/productions.yml
+      invoke  controller
+      create    app/controllers/productions_controller.rb
+      invoke    test_unit
+      create      test/controllers/productions_controller_test.rb
+      invoke  resource_route
+       route    resources :productions
+#+end_src
+
+I then created a 'crew_members' 'resource' with the following command:
+#+begin_src bash
+samuelbanya@Samuels-MBP ~/hub/Development/code/phase-4/phase-4-lecture-videos-intro-to-crud/flatiron-theater $ rails g resource crew_members name job_title production:belongs_to
+[WARNING] The model name 'crew_members' was recognized as a plural, using the singular 'crew_member' instead. Override with --force-plural or setup custom inflection rules for this noun before running the generator.
+      invoke  active_record
+      create    db/migrate/20221021183934_create_crew_members.rb
+      create    app/models/crew_member.rb
+      invoke    test_unit
+      create      test/models/crew_member_test.rb
+      create      test/fixtures/crew_members.yml
+      invoke  controller
+      create    app/controllers/crew_members_controller.rb
+      invoke    test_unit
+      create      test/controllers/crew_members_controller_test.rb
+      invoke  resource_route
+       route    resources :crew_members
+#+end_src
+
+I then ran the related migration with the 'db:migrate' command:
+#+begin_src bash
+samuelbanya@Samuels-MBP ~/hub/Development/code/phase-4/phase-4-lecture-videos-intro-to-crud/flatiron-theater $ rails db:migrate
+== 20221021183754 CreateProductions: migrating ================================
+-- create_table(:productions)
+   -> 0.0021s
+== 20221021183754 CreateProductions: migrated (0.0022s) =======================
+
+== 20221021183934 CreateCrewMembers: migrating ================================
+-- create_table(:crew_members)
+   -> 0.0035s
+== 20221021183934 CreateCrewMembers: migrated (0.0035s) =======================
+#+end_src
+
+I then modified the 'app/models/production.rb' Production model file with the following contents to include the 'has_many' Active Record association method:
+#+begin_src ruby
+class Production < ApplicationRecord
+    has_many :crew_members
+end
+#+end_src
+
+I had to create the 'seeds' file from scratch since the presenter was lazy and didn't include any link whatsoever to the existing one they were using, and placed these seeds in the 'db/seeds.rb' file's contents:
+#+begin_src ruby
+# This file should contain all the record creation needed to seed the database with its default values.
+# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
+#
+# Examples:
+#
+#   movies = Movie.create([{ name: "Star Wars" }, { name: "Lord of the Rings" }])
+#   Character.create(name: "Luke", movie: movies.first)
+Production.destroy_all()
+CrewMember.destroy_all()
+
+
+Production.create(title: "Carmen", genre: "Opera", budget: 80000.00, image: "")
+Production.create(title: "Cats", genre: "Musical", budget: 50000.00, image: "")
+Production.create(title: "Hamilton", genre: "Musical", budget: 100000.00, image: "")
+Production.create(title: "Hamlet", genre: "Shakespearean", budget: 70000.00, image: "")
+
+30.times{CrewMember.create(name:Faker::Name.name, job_title:"Stagehand", salary: 65000.00, production:Production.all.sample)}
+#+end_src
+
+I then modified the project's 'Gemfile' with the 'faker' gem reference as well:
+#+begin_src ruby
+source "https://rubygems.org"
+git_source(:github) { |repo| "https://github.com/#{repo}.git" }
+
+ruby "2.7.4"
+
+# Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
+gem "rails", "~> 7.0.4"
+
+# Use sqlite3 as the database for Active Record
+gem "sqlite3", "~> 1.4"
+
+# Use the Puma web server [https://github.com/puma/puma]
+gem "puma", "~> 5.0"
+
+# Windows does not include zoneinfo files, so bundle the tzinfo-data gem
+gem "tzinfo-data", platforms: %i[ mingw mswin x64_mingw jruby ]
+
+# Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
+# gem "rack-cors"
+
+group :development, :test do
+  # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
+  gem "debug", platforms: %i[ mri mingw x64_mingw ]
+end
+
+group :development do
+  # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
+  # gem "spring"
+  gem "faker", :git => "https://github.com/faker-ruby/faker.git", :branch => "main"
+end
+#+end_src
+
+I then re-ran the 'bundle install' command accordingly.
+
+I then ran the 'rails db:seed' command accordingly.
+
+I then noticed this error:
+#+begin_src bash
+samuelbanya@Samuels-MBP ~/hub/Development/code/phase-4/phase-4-lecture-videos-intro-to-crud/flatiron-theater $ rails db:seed
+rails aborted!
+ActiveModel::UnknownAttributeError: unknown attribute 'salary' for CrewMember.
+/Users/samuelbanya/hub/Development/code/phase-4/phase-4-lecture-videos-intro-to-crud/flatiron-theater/db/seeds.rb:17:in `block in <top (required)>'
+/Users/samuelbanya/hub/Development/code/phase-4/phase-4-lecture-videos-intro-to-crud/flatiron-theater/db/seeds.rb:17:in `times'
+/Users/samuelbanya/hub/Development/code/phase-4/phase-4-lecture-videos-intro-to-crud/flatiron-theater/db/seeds.rb:17:in `<top (required)>'
+Tasks: TOP => db:seed
+(See full trace by running task with --trace)
+#+end_src
+
+However, the instructor on the video noticed an issue with the migration not including the 'description' column for the 'Production' model.
+
+With this in mind, I used the following 'rails generate migration' command:
+#+begin_src bash
+samuelbanya@Samuels-MBP ~/hub/Development/code/phase-4/phase-4-lecture-videos-intro-to-crud/flatiron-theater $ rails generate migration add_description_to_productions description:text
+      invoke  active_record
+      create    db/migrate/20221021190756_add_description_to_productions.rb
+#+end_src
+
+I then ran the related 'rails db:migrate' command accordingly.
+
+I then added another migration for the 'salary' column via the following 'rails generate migration' command:
+#+begin_src ruby
+samuelbanya@Samuels-MBP ~/hub/Development/code/phase-4/phase-4-lecture-videos-intro-to-crud/flatiron-theater $ rails generate migration add_salary_to_crew_members salary:integer
+      invoke  active_record
+      create    db/migrate/20221021190947_add_salary_to_crew_members.rb
+#+end_src
+
+I then ran the 'rails db:migrate' command again.
+
+I then ran the 'rails db:seed' command again.
+
+I then checked the 'rails c' console to check my work:
+#+begin_src bash
+samuelbanya@Samuels-MBP ~/hub/Development/code/phase-4/phase-4-lecture-videos-intro-to-crud/flatiron-theater $ rails c
+Loading development environment (Rails 7.0.4)
+2.7.4 :001 > tables
+Traceback (most recent call last):
+(irb):1:in `<main>': undefined local variable or method `tables' for main:Object (NameError)
+2.7.4 :002 >
+2.7.4 :003 > Production.all()
+  Production Load (0.2ms)  SELECT "productions".* FROM "productions"
+ =>
+[#<Production:0x00007fdc57f71c60
+  id: 5,
+  title: "Carmen",
+  genre: "Opera",
+  budget: 80000,
+  image: "",
+  ongoing: nil,
+  created_at: Fri, 21 Oct 2022 19:12:16.698643000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:16.698643000 UTC +00:00,
+  description: nil>,
+ #<Production:0x00007fdc5cdd52d0
+  id: 6,
+  title: "Cats",
+  genre: "Musical",
+  budget: 50000,
+  image: "",
+  ongoing: nil,
+  created_at: Fri, 21 Oct 2022 19:12:16.702529000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:16.702529000 UTC +00:00,
+  description: nil>,
+ #<Production:0x00007fdc5cdd5208
+  id: 7,
+  title: "Hamilton",
+  genre: "Musical",
+  budget: 100000,
+  image: "",
+  ongoing: nil,
+  created_at: Fri, 21 Oct 2022 19:12:16.706376000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:16.706376000 UTC +00:00,
+  description: nil>,
+ #<Production:0x00007fdc5cdd5140
+  id: 8,
+  title: "Hamlet",
+  genre: "Shakespearean",
+  budget: 70000,
+  image: "",
+  ongoing: nil,
+  created_at: Fri, 21 Oct 2022 19:12:16.709921000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:16.709921000 UTC +00:00,
+  description: nil>]
+2.7.4 :004 > Production.all.length()
+  Production Load (0.2ms)  SELECT "productions".* FROM "productions"
+ => 4
+2.7.4 :005 > CrewMember.all()
+  CrewMember Load (0.4ms)  SELECT "crew_members".* FROM "crew_members"
+ =>
+[#<CrewMember:0x00007fdc5c7e9970
+  id: 1,
+  name: "Titus Effertz",
+  job_title: "Stagehand",
+  production_id: 5,
+  created_at: Fri, 21 Oct 2022 19:12:17.754952000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.754952000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb6658
+  id: 2,
+  name: "Rudy Schuppe",
+  job_title: "Stagehand",
+  production_id: 6,
+  created_at: Fri, 21 Oct 2022 19:12:17.759793000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.759793000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb6590
+  id: 3,
+  name: "Janene Steuber JD",
+  job_title: "Stagehand",
+  production_id: 5,
+  created_at: Fri, 21 Oct 2022 19:12:17.763815000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.763815000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb64c8
+  id: 4,
+  name: "Prof. Gregory Littel",
+  job_title: "Stagehand",
+  production_id: 7,
+  created_at: Fri, 21 Oct 2022 19:12:17.767688000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.767688000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb6400
+  id: 5,
+  name: "Marisela Kreiger",
+  job_title: "Stagehand",
+  production_id: 6,
+  created_at: Fri, 21 Oct 2022 19:12:17.771381000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.771381000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb6338
+  id: 6,
+  name: "Greg Gerhold",
+  job_title: "Stagehand",
+  production_id: 8,
+  created_at: Fri, 21 Oct 2022 19:12:17.775054000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.775054000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb6270
+  id: 7,
+  name: "Vashti Feeney PhD",
+  job_title: "Stagehand",
+  production_id: 6,
+  created_at: Fri, 21 Oct 2022 19:12:17.779575000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.779575000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb61a8
+  id: 8,
+  name: "Gilberto Kozey",
+  job_title: "Stagehand",
+  production_id: 8,
+  created_at: Fri, 21 Oct 2022 19:12:17.784572000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.784572000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb60e0
+  id: 9,
+  name: "Robby Gleason",
+  job_title: "Stagehand",
+  production_id: 7,
+  created_at: Fri, 21 Oct 2022 19:12:17.789797000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.789797000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb6018
+  id: 10,
+  name: "Mauricio Shields",
+  job_title: "Stagehand",
+  production_id: 6,
+  created_at: Fri, 21 Oct 2022 19:12:17.795030000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.795030000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5f50
+  id: 11,
+  name: "Estefana Hackett I",
+  job_title: "Stagehand",
+  production_id: 7,
+  created_at: Fri, 21 Oct 2022 19:12:17.799412000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.799412000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5e88
+  id: 12,
+  name: "Mr. Courtney White",
+  job_title: "Stagehand",
+  production_id: 5,
+  created_at: Fri, 21 Oct 2022 19:12:17.803658000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.803658000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5dc0
+  id: 13,
+  name: "Jeffry Borer",
+  job_title: "Stagehand",
+  production_id: 8,
+  created_at: Fri, 21 Oct 2022 19:12:17.807395000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.807395000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5cf8
+  id: 14,
+  name: "Rep. Rutha Trantow",
+  job_title: "Stagehand",
+  production_id: 7,
+  created_at: Fri, 21 Oct 2022 19:12:17.811334000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.811334000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5c30
+  id: 15,
+  name: "Pres. Henry Senger",
+  job_title: "Stagehand",
+  production_id: 6,
+  created_at: Fri, 21 Oct 2022 19:12:17.815714000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.815714000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5b68
+  id: 16,
+  name: "Gov. Boyce Mills",
+  job_title: "Stagehand",
+  production_id: 5,
+  created_at: Fri, 21 Oct 2022 19:12:17.819829000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.819829000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5aa0
+  id: 17,
+  name: "Michele Streich",
+  job_title: "Stagehand",
+  production_id: 6,
+  created_at: Fri, 21 Oct 2022 19:12:17.824398000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.824398000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb59d8
+  id: 18,
+  name: "Solomon Hintz",
+  job_title: "Stagehand",
+  production_id: 8,
+  created_at: Fri, 21 Oct 2022 19:12:17.829509000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.829509000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5910
+  id: 19,
+  name: "Buffy Hamill",
+  job_title: "Stagehand",
+  production_id: 6,
+  created_at: Fri, 21 Oct 2022 19:12:17.834563000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.834563000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5848
+  id: 20,
+  name: "Frederick Kihn",
+  job_title: "Stagehand",
+  production_id: 5,
+  created_at: Fri, 21 Oct 2022 19:12:17.841454000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.841454000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5780
+  id: 21,
+  name: "Raymond Trantow",
+  job_title: "Stagehand",
+  production_id: 8,
+  created_at: Fri, 21 Oct 2022 19:12:17.845389000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.845389000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb56b8
+  id: 22,
+  name: "Tilda Collins",
+  job_title: "Stagehand",
+  production_id: 8,
+  created_at: Fri, 21 Oct 2022 19:12:17.849783000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.849783000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb55f0
+  id: 23,
+  name: "Robbyn Wintheiser",
+  job_title: "Stagehand",
+  production_id: 8,
+  created_at: Fri, 21 Oct 2022 19:12:17.853467000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.853467000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5528
+  id: 24,
+  name: "Loriann Stehr",
+  job_title: "Stagehand",
+  production_id: 8,
+  created_at: Fri, 21 Oct 2022 19:12:17.857605000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.857605000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5460
+  id: 25,
+  name: "Rosalie Streich",
+  job_title: "Stagehand",
+  production_id: 8,
+  created_at: Fri, 21 Oct 2022 19:12:17.862139000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.862139000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5398
+  id: 26,
+  name: "Eliza Kertzmann Jr.",
+  job_title: "Stagehand",
+  production_id: 5,
+  created_at: Fri, 21 Oct 2022 19:12:17.866346000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.866346000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb52d0
+  id: 27,
+  name: "Bernadine Dietrich",
+  job_title: "Stagehand",
+  production_id: 5,
+  created_at: Fri, 21 Oct 2022 19:12:17.871370000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.871370000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5208
+  id: 28,
+  name: "Elissa Toy",
+  job_title: "Stagehand",
+  production_id: 6,
+  created_at: Fri, 21 Oct 2022 19:12:17.875267000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.875267000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5140
+  id: 29,
+  name: "Ulrike Schiller",
+  job_title: "Stagehand",
+  production_id: 7,
+  created_at: Fri, 21 Oct 2022 19:12:17.880578000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.880578000 UTC +00:00,
+  salary: 65000>,
+ #<CrewMember:0x00007fdc5bbb5078
+  id: 30,
+  name: "Otis Ondricka",
+  job_title: "Stagehand",
+  production_id: 7,
+  created_at: Fri, 21 Oct 2022 19:12:17.886664000 UTC +00:00,
+  updated_at: Fri, 21 Oct 2022 19:12:17.886664000 UTC +00:00,
+  salary: 65000>]
+2.7.4 :006 > CrewMember.all().length()
+  CrewMember Load (0.6ms)  SELECT "crew_members".* FROM "crew_members"
+ => 30
+#+end_src
